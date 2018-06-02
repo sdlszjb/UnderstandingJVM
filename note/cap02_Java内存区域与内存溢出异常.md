@@ -132,9 +132,79 @@ Exception in thread "main" java.lang.StackOverflowError
 - 参数：-XX:PermSize和-XX:MaxPermSize
 - code
 ```java
+/**
+ * @author 庄壮壮
+ * @since 2018-06-02 19:06
+ */
+public class RuntimeConstantPoolOOM {
 
+    /**
+     * 方法区和运行时常量池溢出
+     * VM Args: -XX:PermSize=10M -XX:MaxPermSize=10M
+     * @param args
+     */
+    public static void main(String[] args) {
+
+        List<String> list = new ArrayList<>();
+        int i=0;
+        while (true) {
+            list.add(String.valueOf(i++).intern());
+        }
+    }
+}
 ```
 - output
 ```text
+F:\DeveloperTools\Sdk\java10.0.1\bin\java.exe -XX:PermSize=10M -XX:MaxPermSize=10M -javaagent:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar=3662:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\bin -Dfile.encoding=UTF-8 -classpath C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\classes;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.2.31\kotlin-stdlib-jdk8-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.2.31\kotlin-stdlib-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\annotations\13.0\annotations-13.0.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.2.31\kotlin-stdlib-jdk7-1.2.31.jar cap02_java_memory_and_out_of_memory.RuntimeConstantPoolOOM
+Java HotSpot(TM) 64-Bit Server VM warning: Ignoring option PermSize; support was removed in 8.0
+Java HotSpot(TM) 64-Bit Server VM warning: Ignoring option MaxPermSize; support was removed in 8.0
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+	at java.base/java.lang.Integer.toString(Integer.java:440)
+	at java.base/java.lang.String.valueOf(String.java:2895)
+	at cap02_java_memory_and_out_of_memory.RuntimeConstantPoolOOM.main(RuntimeConstantPoolOOM.java:22)
+
+Process finished with exit code 1
+```
+> 方法区溢出是一种常见的内存溢出异常，一个类要被垃圾收集器回收，判定条件是比较苛刻的。在经常动态生成大量Class的应用中（如CGLib、Spring、Groovy、大量JSP或动态JSP文件的应用、基于OSGi的应用等），需要特别注意类的回收情况。
+### 本机直接内存溢出
+- 参数：-XX: MaxDirectMemorySize，默认与Java堆的最大值（-Xmx）一样。
+- code
+```java
+/**
+ * @author 庄壮壮
+ * @since 2018-06-02 21:00
+ */
+public class DirectMemoryOOM {
+
+    private static final int _MB = 1024 * 1024;
+
+    /**
+     * 使用unsafe分配本机内存
+     * VM Args: -Xmx20M -XX:MaxDirectMemorySize=10M
+     *
+     * @param args
+     * @throws IllegalAccessException
+     */
+    public static void main(String[] args) throws IllegalAccessException {
+        Field unsafeField = Unsafe.class.getDeclaredFields()[0];
+        unsafeField.setAccessible(true);
+
+        Unsafe unsafe = (Unsafe) unsafeField.get(null);
+        while (true) {
+            unsafe.allocateMemory(_MB);
+        }
+    }
+}
+```
+- output
+```text
+F:\DeveloperTools\Sdk\java10.0.1\bin\java.exe -javaagent:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar=10154:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\bin -Dfile.encoding=UTF-8 -classpath C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\classes;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.2.31\kotlin-stdlib-jdk8-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.2.31\kotlin-stdlib-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\annotations\13.0\annotations-13.0.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.2.31\kotlin-stdlib-jdk7-1.2.31.jar cap02_java_memory_and_out_of_memory.DirectMemoryOOM
+Exception in thread "main" java.lang.OutOfMemoryError
+	at java.base/jdk.internal.misc.Unsafe.allocateMemory(Unsafe.java:616)
+	at jdk.unsupported/sun.misc.Unsafe.allocateMemory(Unsafe.java:463)
+	at cap02_java_memory_and_out_of_memory.DirectMemoryOOM.main(DirectMemoryOOM.java:30)
+
+Process finished with exit code 1
 
 ```
+> DirectMemory导致的内存溢出，一个明显的特征是HeapDump文件中不会看见明显的异常。
