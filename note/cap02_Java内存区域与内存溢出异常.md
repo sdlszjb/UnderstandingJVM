@@ -10,7 +10,7 @@
 - 本地方法栈(Native Method Stack)
     > 本地方法栈为虚拟机使用到的Native服务(HotSpot虚拟机中，将它与Java虚拟机栈合二为一)。
 - Java堆(Java Heap)
-    > （所有线程共享）Java堆是所有线程共享的一块区域，在虚拟机启动时创建。用来存放对象实例。是垃圾收集器管理的主要区域。
+    > （所有线程共享）Java堆是所有线程共享的一块区域，在虚拟机启动时创建。用来存放对象实例。是垃圾收集器管理的主要区域。(类似CODE区)
 - 方法区(Method Area)
     > （所有线程共享）用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。（类似DATA区）
 - 运行时常量池(Runtime Constant Pool)
@@ -32,15 +32,16 @@
     - 直接指针
 
 ## 实战：OutOfMemoryError异常
-1. Java堆溢出
+### Java堆溢出
 
-code:
+- code:
 ```java
 /**
  * @author 庄壮壮
  * @since 2018-06-02 18:24
  */
-public class ClientTest {
+public class HeapOOM {
+
 
     private static class OOMObject {
     }
@@ -49,8 +50,7 @@ public class ClientTest {
      * 测试Java堆溢出
      * VM Args: -Xms20m -Xmx20m -XX:+HeapDumpOnOutOfMemoryError
      */
-    @Test
-    public void headOOM() {
+    public static void main(String[] args) {
         List<OOMObject> objects = new ArrayList<>();
         while (true) {
             objects.add(new OOMObject());
@@ -58,48 +58,83 @@ public class ClientTest {
     }
 }
 ```
-output:
+- output:
 ```text
-F:\DeveloperTools\Sdk\java10.0.1\bin\java.exe -ea -Xms20m -Xmx20m -XX:+HeapDumpOnOutOfMemoryError -Didea.test.cyclic.buffer.size=1048576 -javaagent:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar=1391:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\bin -Dfile.encoding=UTF-8 -classpath S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar;S:\DeveloperTools\Intellij\ideaIU-2018.1.4\plugins\junit\lib\junit-rt.jar;S:\DeveloperTools\Intellij\ideaIU-2018.1.4\plugins\junit\lib\junit5-rt.jar;C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\test-classes;C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\classes;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.2.31\kotlin-stdlib-jdk8-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.2.31\kotlin-stdlib-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\annotations\13.0\annotations-13.0.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.2.31\kotlin-stdlib-jdk7-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-test-junit\1.2.31\kotlin-test-junit-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-test\1.2.31\kotlin-test-1.2.31.jar;C:\Users\lsk\.m2\repository\junit\junit\4.12\junit-4.12.jar;C:\Users\lsk\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar com.intellij.rt.execution.junit.JUnitStarter -ideVersion5 -junit4 cap02_java_memory_and_out_of_memory.ClientTest,headOOM
+F:\DeveloperTools\Sdk\java10.0.1\bin\java.exe -Xms20m -Xmx20m -XX:+HeapDumpOnOutOfMemoryError -javaagent:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar=3547:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\bin -Dfile.encoding=UTF-8 -classpath C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\classes;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.2.31\kotlin-stdlib-jdk8-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.2.31\kotlin-stdlib-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\annotations\13.0\annotations-13.0.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.2.31\kotlin-stdlib-jdk7-1.2.31.jar cap02_java_memory_and_out_of_memory.HeapOOM
 java.lang.OutOfMemoryError: Java heap space
-Dumping heap to java_pid8880.hprof ...
-Heap dump file created [30899517 bytes in 0.087 secs]
-
-java.lang.OutOfMemoryError: Java heap space
-
+Dumping heap to java_pid12368.hprof ...
+Heap dump file created [29562804 bytes in 0.080 secs]
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 	at java.base/java.util.Arrays.copyOf(Arrays.java:3719)
 	at java.base/java.util.Arrays.copyOf(Arrays.java:3688)
 	at java.base/java.util.ArrayList.grow(ArrayList.java:237)
 	at java.base/java.util.ArrayList.grow(ArrayList.java:242)
 	at java.base/java.util.ArrayList.add(ArrayList.java:467)
 	at java.base/java.util.ArrayList.add(ArrayList.java:480)
-	at cap02_java_memory_and_out_of_memory.ClientTest.headOOM(ClientTest.java:27)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:564)
-	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
-	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
-	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
-	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
-	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
-	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
-	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
-	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
-	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
-	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
-	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
-	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
-	at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
-	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
-	at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:68)
-	at com.intellij.rt.execution.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:47)
-	at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:242)
-	at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:70)
+	at cap02_java_memory_and_out_of_memory.HeapOOM.main(HeapOOM.java:23)
 
-Process finished with exit code -1
+Process finished with exit code 1
 ```
-
-问题解决：
+- 问题解决：
     - 如果是泄露，找到泄露代码，并解决
     - 如果内存中的对象确实都必须存活，设置-Xmx -Xms参数，或者增大机器物理内存，或者代码优化。
+    
+### 虚拟机栈和本地方法栈溢出
+由于在HotSpot中，并不区分虚拟机栈和本地方法栈，因此对于HotSpot来说，虽然-Xoss参数存在，但实际上是无效的，栈容量只由-Xss参数设定。
+- 两种异常：
+    - 线程请求的栈深度大于虚拟机所允许的最大深度，将抛出StackOverflowError
+    - 如果虚拟机在扩展栈时无法申请到足够的内存空间，则抛出OutOfMemoryError
+- code
+```java
+
+/**
+ * @author 庄壮壮
+ * @since 2018-06-02 18:54
+ */
+public class JavaVMStackSOF {
+
+    private int stackLength = 1;
+
+    /**
+     * 虚拟机栈和本地方法栈OOM测试
+     * VM Args: -Xss10m
+     * @param args
+     */
+    public static void main(String[] args) {
+        JavaVMStackSOF oom = new JavaVMStackSOF();
+        try {
+            oom.stackLeak();
+        } catch (Throwable e) {
+            System.out.println("stack length: " + oom.stackLength);
+            throw e;
+        }
+    }
+
+    private void stackLeak() {
+        stackLength++;
+        stackLeak();
+    }
+}
+```
+- output
+```text
+F:\DeveloperTools\Sdk\java10.0.1\bin\java.exe -Xss10m -javaagent:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\lib\idea_rt.jar=3605:S:\DeveloperTools\Intellij\ideaIU-2018.1.4\bin -Dfile.encoding=UTF-8 -classpath C:\Users\lsk\IdeaProjects\producting\UnderstandingJVM\target\classes;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.2.31\kotlin-stdlib-jdk8-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.2.31\kotlin-stdlib-1.2.31.jar;C:\Users\lsk\.m2\repository\org\jetbrains\annotations\13.0\annotations-13.0.jar;C:\Users\lsk\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.2.31\kotlin-stdlib-jdk7-1.2.31.jar cap02_java_memory_and_out_of_memory.JavaVMStackSOF
+stack length: 214509
+Exception in thread "main" java.lang.StackOverflowError
+	at cap02_java_memory_and_out_of_memory.JavaVMStackSOF.stackLeak(JavaVMStackSOF.java:28)
+	at cap02_java_memory_and_out_of_memory.JavaVMStackSOF.stackLeak(JavaVMStackSOF.java:28)
+...
+```
+- 如果多线程开发时候，-Xss设置过大，也会出现StackOverflowError异常。原因解释：为每个线程分配的-Xss过大，导致在内存一定的前提下，可以建立的线程数过少，新线程无法建立，导致SOF错误。
+    - 解决办法：通过减小Xss的参数数值。
+
+### 方法区和运行时常量池溢出(HotSpot64-Bit 8.0已经Removed)
+- 参数：-XX:PermSize和-XX:MaxPermSize
+- code
+```java
+
+```
+- output
+```text
+
+```
