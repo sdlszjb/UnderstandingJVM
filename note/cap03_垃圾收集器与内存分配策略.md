@@ -90,3 +90,8 @@ Process finished with exit code 0
     - 加载类的ClassLoader已经被回收
     - 该类对应的java.lang.Class对象没有在任何地方被引用，无法在任何地方通过反射访问该类的方法。
     > HotSpot虚拟机提供了-Xnoclassgc参数进行控制，还可以使用-verbose:class、-XX:+TraceClassLoading、-XX:+TraceClassUnLoading查看类加载和卸载信息。在大量使用反射、动态代理、CGLib等ByteCode框架、动态生成JSP以及OSGi这类频繁自定义ClassLoader的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。
+### 垃圾收集算法
+- 标记-清除算法
+- 复制算法（带分配担保的复制算法）
+- 标记整理算法
+- 分代收集算法：新生代中，每次垃圾收集时都发现有大批对象死去，选用复制算法；在老年代中，对象存活率高，没有额外的空间对它进行分配担保，因此使用“标记
